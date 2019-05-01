@@ -1,0 +1,15 @@
+version: '3'
+
+networks:
+  travis-test:
+    driver: bridge
+
+services:
+  travis_test_service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.test
+    volumes:
+      - $PWD:/go/src/github.com/MaksRybalkin/TravisTest/
+    networks:
+      - travis-test
