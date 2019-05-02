@@ -1,16 +1,43 @@
 language: go
+
 go:
-  - 1.12.x
+  - tip
+
+services:
+  - docker
 
 git:
   depth: 5
 
-services:
-  - docker
-before_install:
-  - docker ps -a
-install:
-  - go get github.com/mattn/goveralls
-script:
-  - make dtest
-  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
+stages:
+  - testing
+  - code_quality
+  - deploy
+
+addons:
+  sonarcloud:
+    organization: "maksrybalkin-github"
+    token:
+      secure: "fuSgTqZZkh4WhNAbbKr4p5xHZenz8jHRwe5V8hPUnkn7XzFESEVigYXIVqWnC3JST5R4DXtbjBll6MHvYuPwGIHbhiFUFol37mA5pQxGHfKTEr9L26IMLY1sPofbpWMfbwXwBdgB83ndmLUcvg3W4EpFdfloVlFSZi6PlSAzdU5OPJFZqV7nPS0rEhypFYd8R/6oF4aiT04QX1umZUaetxr8QmtvCzh25qKhztQ9aHxJBVzvUMNNbk2ZjQVul53aOWEnorK0Q3M4UDvckpWLMUioyVLtECcgKqA3339qhREb4SL9i+yxbaX32JVzuKMEIi0YLnJzbSl8SuFi4lZKJvsaDj+O7zp0wn+QJke/BL8odHrT5xGralFxuEz6xquy0+ypkmg8bNTAj4w1I6uaa+KjwOE7aT1OVZJJvMOqGQigkQl4PVXeaplIOkPPVV/IDzuIQ4hCLkfpgF2bTCw0J5KcMjEpxE8QUJeqHu9W7ru+uEyPbYnxYSSXIizS/yFgyI/pWo883SuuI1ADOwqiJO2GEhNmaW4Kqrw7nVeF8HxnPrVNscIWjHUFCpPOkKBuZEZBD8LHJ24moAyeJTrZP1gQ9cYcJC9Xe/+Y5YyPtpbt1FwOI2KornEWdlwPxaRQ92G7Lq5aaIvYqLDHVUNfCfWgATNnkqYR6kVoaHpvT8o="
+
+
+jobs:
+  include:
+    - stage: testing
+      name: "Unit tests"
+      install:
+        - go get -v github.com/mattn/goveralls
+        - go get -v golang.org/x/tools/cmd/cover
+      script:
+        - make publish_cover
+
+    - stage: testing
+      name: "Code quality"
+      before_script: go get github.com/golangci/golangci-lint/cmd/golangci-lint
+      script:
+        - sonar-scanner
+        - golangci-lint run -v
+
+    - stage: deploy
+      name: "Deploy dockerized application"
+      script: make heroku_deploy

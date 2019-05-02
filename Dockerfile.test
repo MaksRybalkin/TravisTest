@@ -1,9 +1,7 @@
 FROM golang:1.12-alpine
 
 # Install git
-RUN set -ex; \
-    apk update; \
-    apk add --no-cache git
+RUN apk update && apk add --no-cache git ca-certificates && update-ca-certificates
 
 # Set working directory
 WORKDIR /go/src/github.com/MaksRybalkin/TravisTest/

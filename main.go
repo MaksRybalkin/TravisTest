@@ -20,8 +20,13 @@ func main() {
 		}
 	}()
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	server := http.Server{
-		Addr:           ":8080",
+		Addr:           fmt.Sprintf(":%s", port),
 		Handler:        handlers(),
 		ReadTimeout:    5 * time.Second,
 		WriteTimeout:   10 * time.Second,

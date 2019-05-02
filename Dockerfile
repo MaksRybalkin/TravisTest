@@ -1,9 +1,7 @@
 FROM golang:1.12-alpine AS src
 
 # Install git
-RUN set -ex; \
-    apk update; \
-    apk add --no-cache git
+RUN apk update && apk add --no-cache git ca-certificates && update-ca-certificates
 
 # Copy Repository
 WORKDIR /go/src/github.com/MaksRybalkin/TravisTest/
@@ -11,16 +9,16 @@ COPY . ./
 
 # Build Go Binary
 RUN set -ex; \
-    CGO_ENABLED=0 GOOS=linux go build -o ./travistest;
+    CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
+    -ldflags "-s -w -X main.RELEASE=0.0.1 -X main.DATE=`date +"%Y-%m-%dT%H:%M:%SZ"` -X main.REPO=`git config --get remote.origin.url` -X main.COMMIT=`git rev-parse --short HEAD`" \
+    -o ./travistest
 
 # Final image, no source code
 FROM alpine:latest
 
-# Install Root Ceritifcates
-RUN set -ex; \
-    apk update; \
-    apk add --no-cache \
-    ca-certificates
+RUN apk update && apk add --no-cache ca-certificates && update-ca-certificates
+
+COPY --from=src /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 EXPOSE 8080
 
